@@ -21,6 +21,12 @@ export function createParsingComponentsAtWeekday(
     components = components.addDurationAsImplied({ day: daysToWeekday });
     components.assign("weekday", weekday);
 
+    // The weekday direction is explicitly mentioned (e.g. "next Friday" or "last Friday").
+    // The date implication (e.g. forwardDate/backwardDate) should not override it.
+    if (modifier) {
+        components.addTag("result/weekdayWithModifier");
+    }
+
     return components;
 }
 

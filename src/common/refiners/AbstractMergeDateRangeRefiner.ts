@@ -1,7 +1,8 @@
 /*
-  
+
 */
 
+import { ParsingContext } from "../../chrono";
 import { ParsingResult } from "../../results";
 import { MergingRefiner } from "../abstractRefiners";
 import { addDuration } from "../../calculation/duration";
@@ -13,7 +14,15 @@ export default abstract class AbstractMergeDateRangeRefiner extends MergingRefin
         return !currentResult.end && !nextResult.end && textBetween.match(this.patternBetween()) != null;
     }
 
-    mergeResults(textBetween, fromResult, toResult): ParsingResult {
+    /**
+     * When the two mentioning are initially unordered and either interpretation would be valid,
+     * decide whether the range is assumed to extend forward (default) or backward.
+     */
+    protected preferBackwardRange(context: ParsingContext): boolean {
+        return false;
+    }
+
+    mergeResults(textBetween, fromResult, toResult, context?: ParsingContext): ParsingResult {
         if (!fromResult.start.isOnlyWeekdayComponent() && !toResult.start.isOnlyWeekdayComponent()) {
             toResult.start.getCertainComponents().forEach((key) => {
                 if (!fromResult.start.isCertain(key)) {
@@ -31,7 +40,17 @@ export default abstract class AbstractMergeDateRangeRefiner extends MergingRefin
             let fromDate = fromResult.start.date();
             let toDate = toResult.start.date();
 
-            if (toResult.start.isOnlyWeekdayComponent() && addDuration(toDate, { day: 7 }) > fromDate) {
+            if (
+                this.preferBackwardRange(context) &&
+                toResult.start.isOnlyWeekdayComponent() &&
+                fromResult.start.isOnlyWeekdayComponent() &&
+                addDuration(fromDate, { day: -7 }) < toDate
+            ) {
+                fromDate = addDuration(fromDate, { day: -7 });
+                fromResult.start.imply("day", fromDate.getDate());
+                fromResult.start.imply("month", fromDate.getMonth() + 1);
+                fromResult.start.imply("year", fromDate.getFullYear());
+            } else if (toResult.start.isOnlyWeekdayComponent() && addDuration(toDate, { day: 7 }) > fromDate) {
                 toDate = addDuration(toDate, { day: 7 });
                 toResult.start.imply("day", toDate.getDate());
                 toResult.start.imply("month", toDate.getMonth() + 1);
@@ -40,6 +59,14 @@ export default abstract class AbstractMergeDateRangeRefiner extends MergingRefin
                 fromDate = addDuration(fromDate, { day: -7 });
                 fromResult.start.imply("day", fromDate.getDate());
                 fromResult.start.imply("month", fromDate.getMonth() + 1);
+                fromResult.start.imply("year", fromDate.getFullYear());
+            } else if (
+                this.preferBackwardRange(context) &&
+                toResult.start.isDateWithUnknownYear() &&
+                fromResult.start.isDateWithUnknownYear() &&
+                addDuration(fromDate, { year: -1 }) < toDate
+            ) {
+                fromDate = addDuration(fromDate, { year: -1 });
                 fromResult.start.imply("year", fromDate.getFullYear());
             } else if (toResult.start.isDateWithUnknownYear() && addDuration(toDate, { year: 1 }) > fromDate) {
                 toDate = addDuration(toDate, { year: 1 });
