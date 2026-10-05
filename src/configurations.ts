@@ -4,6 +4,7 @@ import ExtractTimezoneAbbrRefiner from "./common/refiners/ExtractTimezoneAbbrRef
 import ExtractTimezoneOffsetRefiner from "./common/refiners/ExtractTimezoneOffsetRefiner";
 import OverlapRemovalRefiner from "./common/refiners/OverlapRemovalRefiner";
 import ForwardDateRefiner from "./common/refiners/ForwardDateRefiner";
+import BackwardDateRefiner from "./common/refiners/BackwardDateRefiner";
 import UnlikelyFormatFilter from "./common/refiners/UnlikelyFormatFilter";
 import ISOFormatParser from "./common/parsers/ISOFormatParser";
 import MergeWeekdayComponentRefiner from "./common/refiners/MergeWeekdayComponentRefiner";
@@ -20,6 +21,7 @@ export function includeCommonConfiguration(configuration: Configuration, strictM
     configuration.refiners.push(new ExtractTimezoneAbbrRefiner());
     configuration.refiners.push(new OverlapRemovalRefiner());
     configuration.refiners.push(new ForwardDateRefiner());
+    configuration.refiners.push(new BackwardDateRefiner());
     configuration.refiners.push(new UnlikelyFormatFilter(strictMode));
     return configuration;
 }

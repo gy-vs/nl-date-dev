@@ -155,6 +155,11 @@ export class ParsingContext implements DebugHandler {
     constructor(text: string, refDate?: ParsingReference | Date, option?: ParsingOption) {
         this.text = text;
         this.option = option ?? {};
+        if (this.option.forwardDate && this.option.backwardDate) {
+            throw new Error(
+                "The 'forwardDate' and 'backwardDate' options cannot be used together (both are set to true)."
+            );
+        }
         this.reference = ReferenceWithTimezone.fromInput(refDate, this.option.timezones);
         this.refDate = this.reference.instant;
     }

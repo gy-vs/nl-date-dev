@@ -13,7 +13,7 @@ export default abstract class AbstractMergeDateRangeRefiner extends MergingRefin
         return !currentResult.end && !nextResult.end && textBetween.match(this.patternBetween()) != null;
     }
 
-    mergeResults(textBetween, fromResult, toResult): ParsingResult {
+    mergeResults(textBetween, fromResult, toResult, context): ParsingResult {
         if (!fromResult.start.isOnlyWeekdayComponent() && !toResult.start.isOnlyWeekdayComponent()) {
             toResult.start.getCertainComponents().forEach((key) => {
                 if (!fromResult.start.isCertain(key)) {
@@ -31,7 +31,21 @@ export default abstract class AbstractMergeDateRangeRefiner extends MergingRefin
             let fromDate = fromResult.start.date();
             let toDate = toResult.start.date();
 
-            if (toResult.start.isOnlyWeekdayComponent() && addDuration(toDate, { day: 7 }) > fromDate) {
+            if (context.option.backwardDate) {
+                // With 'backwardDate', the range is kept before the reference date. So the begining of
+                // the range is moved backward (instead of moving the end forward) to fix the order.
+                if (fromResult.start.isOnlyWeekdayComponent() && addDuration(fromDate, { day: -7 }) < toDate) {
+                    fromDate = addDuration(fromDate, { day: -7 });
+                    fromResult.start.imply("day", fromDate.getDate());
+                    fromResult.start.imply("month", fromDate.getMonth() + 1);
+                    fromResult.start.imply("year", fromDate.getFullYear());
+                } else if (fromResult.start.isDateWithUnknownYear() && addDuration(fromDate, { year: -1 }) < toDate) {
+                    fromDate = addDuration(fromDate, { year: -1 });
+                    fromResult.start.imply("year", fromDate.getFullYear());
+                } else {
+                    [toResult, fromResult] = [fromResult, toResult];
+                }
+            } else if (toResult.start.isOnlyWeekdayComponent() && addDuration(toDate, { day: 7 }) > fromDate) {
                 toDate = addDuration(toDate, { day: 7 });
                 toResult.start.imply("day", toDate.getDate());
                 toResult.start.imply("month", toDate.getMonth() + 1);

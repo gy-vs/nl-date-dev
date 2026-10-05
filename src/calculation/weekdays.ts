@@ -3,6 +3,13 @@ import { ParsingComponents, ReferenceWithTimezone } from "../results";
 import { implySimilarTime } from "../utils/dates";
 
 /**
+ * Tag added to parsing components whose weekday came with an explicit modifier word
+ * (e.g. "this", "next", "last"). Refiners use this to avoid re-guessing dates
+ * that the user has already pinned down.
+ */
+export const WEEKDAY_MODIFIER_TAG = "weekdayWithModifier";
+
+/**
  * Returns the parsing components at the weekday (considering the modifier). The time and timezone is assume to be
  * similar to the reference.
  * @param reference
@@ -20,6 +27,9 @@ export function createParsingComponentsAtWeekday(
     let components = new ParsingComponents(reference);
     components = components.addDurationAsImplied({ day: daysToWeekday });
     components.assign("weekday", weekday);
+    if (modifier) {
+        components.addTag(WEEKDAY_MODIFIER_TAG);
+    }
 
     return components;
 }

@@ -8,6 +8,13 @@ export interface ParsingOption {
     forwardDate?: boolean;
 
     /**
+     * To parse only backward dates (the results should be before the reference date).
+     * This effects date/time implication (e.g. weekday or time mentioning).
+     * Cannot be used together with `forwardDate`.
+     */
+    backwardDate?: boolean;
+
+    /**
      * Additional timezone keywords for the parsers to recognize.
      * Any value provided will override the default handling of that value.
      */
